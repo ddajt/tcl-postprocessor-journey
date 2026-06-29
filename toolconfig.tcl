@@ -1,7 +1,0 @@
-array set tools {
-    T01 {12.5 HSS active}
-    T02 {8.0 Carbide worn}
-    T03 {6.0 HSS active}
-    T04 {4.5 Carbide active}
-}
-set MACHINE "VMC-850"
