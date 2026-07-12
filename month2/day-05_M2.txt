@@ -1,0 +1,244 @@
+
+%
+N10 G40 G17 G90 G71
+N20 G91 G28 Z0.0
+N30 T01 M06
+N40 G54
+N50 G00 G90 X150. Y12.53 S1000 M03
+N60 G43 Z4. H01
+N70 Z3.875
+N80 G01 Z.875 F300. M08
+N90 X100.
+N100 X0.0
+N110 G02 Y46.25 I0.0 J16.86
+N120 G01 X100.
+N130 G03 Y79.97 I0.0 J16.86
+N140 G01 X0.0
+N150 X-50.
+N160 Z3.875
+N170 G00 Z4.
+N180 X150. Y12.53
+N190 Z3.75
+N200 G01 Z.75
+N210 X100.
+N220 X0.0
+N230 G02 Y46.25 I0.0 J16.86
+N240 G01 X100.
+N250 G03 Y79.97 I0.0 J16.86
+N260 G01 X0.0
+N270 X-50.
+N280 Z3.75
+N290 G00 Z4.
+N300 X150. Y12.53
+N310 Z3.625
+N320 G01 Z.625
+N330 X100.
+N340 X0.0
+N350 G02 Y46.25 I0.0 J16.86
+N360 G01 X100.
+N370 G03 Y79.97 I0.0 J16.86
+N380 G01 X0.0
+N390 X-50.
+N400 Z3.625
+N410 G00 Z4.
+N420 X150. Y12.53
+N430 Z3.5
+N440 G01 Z.5
+N450 X100.
+N460 X0.0
+N470 G02 Y46.25 I0.0 J16.86
+N480 G01 X100.
+N490 G03 Y79.97 I0.0 J16.86
+N500 G01 X0.0
+N510 X-50.
+N520 Z3.5
+N530 G00 Z4.
+N540 X150. Y12.53
+N550 Z3.375
+N560 G01 Z.375
+N570 X100.
+N580 X0.0
+N590 G02 Y46.25 I0.0 J16.86
+N600 G01 X100.
+N610 G03 Y79.97 I0.0 J16.86
+N620 G01 X0.0
+N630 X-50.
+N640 Z3.375
+N650 G00 Z4.
+N660 X150. Y12.53
+N670 Z3.25
+N680 G01 Z.25
+N690 X100.
+N700 X0.0
+N710 G02 Y46.25 I0.0 J16.86
+N720 G01 X100.
+N730 G03 Y79.97 I0.0 J16.86
+N740 G01 X0.0
+N750 X-50.
+N760 Z3.25
+N770 G00 Z4.
+N780 X150. Y12.53
+N790 Z3.125
+N800 G01 Z.125
+N810 X100.
+N820 X0.0
+N830 G02 Y46.25 I0.0 J16.86
+N840 G01 X100.
+N850 G03 Y79.97 I0.0 J16.86
+N860 G01 X0.0
+N870 X-50.
+N880 Z3.125
+N890 G00 Z4.
+N900 X150. Y12.53
+N910 Z3.
+N920 G01 Z0.0
+N930 X100.
+N940 X0.0
+N950 G02 Y46.25 I0.0 J16.86
+N960 G01 X100.
+N970 G03 Y79.97 I0.0 J16.86
+N980 G01 X0.0
+N990 X-50.
+N1000 Z3.
+N1010 G00 Z4.
+N1020 M02
+%
+
+problem-1:
+Catogorize the gap BY Choosing FATAL,WRONG, STYLYE,MISSING
+1. G43 H01  → should be D register, no G43                   FATAL
+2. G91 G28 Z0.0 → should be G75 Z0 or SUPA G0 Z0             FATAL  
+3. M02       → should be M30                                 WRONG
+4. G71       → remove for dedicated metric machine           STYLE
+5. setup.mpf      → program name missing                     MISSING
+6. G75 Z0         before end of program                      WRONG
+7. T01 M06      on N30 — no G00 Z retract before tool change FATAL
+   POST OUTPUT:  N20 G91 G28 Z0.0 then immediately N30 T01 M06
+   810D EXPECTS: Z clear confirmed before carousel rotates
+   This is actually handled by G28/G75 on N20 — so check 
+   machine's tool change macro to confirm if additional Z clear needed
+   
+8. Coolant off before program end                             MISSING
+   POST OUTPUT:  M08 turns coolant on at N80, never turns off
+   810D EXPECTS: M09 before M30
+   FIX IN:       MOM_end_of_path or end_of_program template
+
+9. CYCLE832 missing before G54                     MISSING
+    FIX IN: MOM_set_csys or PB_start_of_program
+
+10. TRAFOOF + SUPA home sequence missing           WRONG
+    FIX IN: MOM_start_of_program header template
+
+11. Tool called by number not name string          CHECK
+    FIX IN: MOM_tool_change / tool_change template
+
+12. G60 G601 FNORM missing from header             WRONG
+    FIX IN: absolute_mode template in .def
+            
+
+___________________________________________________________________________________________________________________________
+   
+problem -2 
+
+   From your VMC 850, write down or recall the exact header of a known good working program. 
+   Compare it line by line against your post output header (N10 through N60). 
+   List every difference.
+
+solution:
+
+default- program
+
+N10 G40 G17 G90 G71
+N20 G75 Z0
+N30 T01
+N40 G54
+N50 G00 G90 X150. Y12.53 S1000 M03
+
+Simense 810D eqivelent - program
+
+G40 G17 G710 G90 G60 G601 FNORM
+TRAFOOF
+SUPA G0 Z=_Z_HOME D0
+SUPA G0 X=_X_HOME Y=_Y_HOME D1
+T="MILL"
+M6
+MSG("METHOD")
+TRAFOOF
+SUPA G0 Z=_Z_HOME D0
+SUPA G0 X=_X_HOME Y=_Y_HOME D1
+CYCLE832
+TRAFOOF
+G54
+G0 X150. Y12.53 S1000 D1 M3
+
+
+problem -3
+
+You now have 12 gaps. Rank them 1-13, fix order, with one sentence justification each. 
+What breaks the machine goes first. What style goes last.
+
+
+RANK 1  — Program name missing → %_N_SETUP_MPF header     FATAL
+          Reason: 810D won't load unnamed program into memory.
+          Nothing else runs until this is present.
+          FIX IN: MOM_start_of_program header template
+
+RANK 2  — G43 H01 → T1 D1, no G43                        FATAL
+          Reason: First Z move goes to wrong position with wrong
+          offset register. Machine crashes into part or air cuts.
+          FIX IN: MOM_length_compensation / tool_length_adjust template
+
+RANK 3  — G91 G28 → TRAFOOF + SUPA G0 Z=_Z_HOME          FATAL
+          Reason: Wrong home syntax on Siemens native mode alarms
+          immediately. Carousel rotates with spindle in wrong position.
+          FIX IN: MOM_start_of_program header template
+
+RANK 4  — T01 → T="toolname" M6                          FATAL
+          Reason: Wrong tool called means wrong geometry loaded.
+          Machine runs with incorrect tool or alarms on tool search.
+          FIX IN: MOM_tool_change / tool_change template
+
+RANK 5  — CYCLE832 missing before G54                     FATAL
+          Reason: Without CYCLE832 the machine interpolates in basic
+          mode — wrong tolerance, rough finish, potential chatter.
+          FIX IN: MOM_set_csys or PB_start_of_program
+
+RANK 6  — M02 → M30                                      WRONG
+          Reason: Program pointer stays at end after cycle complete.
+          Operator must manually rewind before every repeat run.
+          FIX IN: MOM_end_of_program / end_of_program template
+
+RANK 7  — G60 G601 FNORM missing from header              WRONG
+          Reason: Positioning tolerance undefined — machine uses
+          default which may cause dimensional errors on corners.
+          FIX IN: absolute_mode template in .def
+
+RANK 8  — G75 Z0 missing before M30                      WRONG
+          Reason: Tool stays at last cutting position when program
+          ends. Operator opens door into a lowered spindle.
+          FIX IN: MOM_end_of_program template
+
+RANK 9  — TRAFOOF + SUPA end sequence missing             WRONG
+          Reason: No supervised return at program end means tool
+          position after M30 is undefined and unsupervised.
+          FIX IN: MOM_end_of_program template
+
+RANK 10 — M09 coolant off missing                        MISSING
+          Reason: Coolant runs after program ends. Flood continues
+          until operator manually intervenes. Wastes coolant, messy.
+          FIX IN: MOM_end_of_path or end_of_program template
+
+RANK 11 — M05 spindle off missing                        MISSING
+          Reason: Spindle keeps running after program end until
+          operator stops it manually. Safety and wear issue.
+          FIX IN: MOM_end_of_program template
+
+RANK 12 — G71 → remove for dedicated metric machine      STYLE
+          Reason: Machine is permanently metric. Declaring it
+          per-program is redundant. Clean it up last.
+          FIX IN: absolute_mode template in .def
+
+RANK 13 — Tool by number vs name string                  CHECK
+          Reason: Verify machine accepts T01 format before fixing.
+          May not be a problem on your specific configuration.
+          FIX IN: MOM_tool_change if confirmed broken
